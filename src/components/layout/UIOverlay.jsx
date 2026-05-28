@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExperiment } from '../../context/ExperimentContext';
 import './UIOverlay.css';
-import { Home, Lightbulb, BookOpen, ListOrdered, Table2, ShieldCheck, X, Book } from 'lucide-react';
+import { Home, Lightbulb, BookOpen, ListOrdered, Table2, ShieldCheck, X, Book, ArrowLeft, RotateCcw } from 'lucide-react';
 import { BlockMath } from 'react-katex';
 import { chemistryExperiments } from '../../experiments/chemistry';
 import { physicsExperiments } from '../../experiments/physics';
@@ -11,14 +11,15 @@ import ObservationTable from '../ui/ObservationTable';
 const UIOverlay = ({ type }) => {
   const navigate = useNavigate();
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
-  const { activeExperiment, setActiveExperiment, activeTab, setActiveTab, observations, completedExperiments, setCompletedExperiments, currentStep, setCurrentStep } = useExperiment();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { activeExperiment, setActiveExperiment, activeTab, setActiveTab, observations, setObservations, completedExperiments, setCompletedExperiments, currentStep, setCurrentStep } = useExperiment();
 
   const experiments = type === 'chemistry' ? chemistryExperiments : physicsExperiments;
 
   return (
     <div className="ui-overlay">
       {/* Sidebar Navigation */}
-      <div className="sidebar">
+      <div className={`sidebar ${!isSidebarOpen ? 'hidden' : ''}`}>
         <div className="sidebar-header">
           <button className="btn btn-home" onClick={() => navigate('/')}>
             <Home size={18} /> MENU
@@ -37,7 +38,10 @@ const UIOverlay = ({ type }) => {
               onClick={() => {
                 setActiveExperiment(exp);
                 setCurrentStep(0); // Reset step when switching experiments
+                setObservations({}); // Reset observations
+                setActiveTab('theory'); // Reset tab
                 setIsNotebookOpen(true); // Open notebook when selecting new experiment
+                setIsSidebarOpen(false); // Hide sidebar to focus on experiment
                 // Play a subtle click sound
                 new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3').play().catch(e=>e);
               }}
@@ -47,6 +51,19 @@ const UIOverlay = ({ type }) => {
           ))}
         </div>
       </div>
+
+      {/* Floating Back Button */}
+      {activeExperiment && !isSidebarOpen && (
+        <button 
+          className="floating-back-btn orbitron glow-text"
+          onClick={() => {
+            setIsSidebarOpen(true);
+            setIsNotebookOpen(false);
+          }}
+        >
+          <ArrowLeft size={20} /> CHOOSE EXPERIMENT
+        </button>
+      )}
 
       {/* Floating Notebook Button (Visible when notebook is closed) */}
       {activeExperiment && !isNotebookOpen && (
@@ -64,6 +81,18 @@ const UIOverlay = ({ type }) => {
           <div className="panel-header">
             <h2 className="orbitron">{activeExperiment.title}</h2>
             <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                className="hint-btn" 
+                style={{ color: '#ffcc00', borderColor: '#ffcc00' }} 
+                onClick={() => {
+                  setCurrentStep(0);
+                  setObservations({});
+                  setActiveTab('theory');
+                }} 
+                title="Restart Experiment"
+              >
+                <RotateCcw size={20} />
+              </button>
               <button className="hint-btn" title="Get Hint">
                 <Lightbulb size={20} />
               </button>
